@@ -1,43 +1,34 @@
-from typing import Optional
-
 from app.infrastructure.db.repositories.job_repository import JobRepository
 from app.infrastructure.db.models.job_model import JobModel
 from app.domain.enums import JobStatus
 
 class JobService:
-    """
-    Business logic for job lifecycle.
-    """
-
-    def __init__(self, job_repo: JobRepository):
-        self.job_repo = job_repo
+    def __init__(self, repo: JobRepository):
+        self.repo = repo
 
     def create_job(self, payload: dict) -> JobModel:
-        """
-        Create a new job in PENDING state.
-        """
-        job=JobModel(
+        job = JobModel(
             payload=payload,
             status=JobStatus.PENDING,
-            retries=0;
         )
-        return self.job_repo.create_job(job)
+        return self.repo.create(job)
 
-    def get_job(self, job_id: int) -> Optional[JobModel]:
-        return self.job_repo.get_by_id(job_id)
+    def mark_running(self, job: JobModel):
+        job.status = JobStatus.RUNNING
+        return self.repo.save(job)
 
-    def mark_running(self, job: JobModel) -> JobModel:
-        return self.job_repo.update_status(job, JobStatus.RUNNING)
-
-    def mark_success(self, job: JobModel, result: dict) -> JobModel:
+    def mark_success(self, job: JobModel, result: dict):
+        job.status = JobStatus.COMPLETED
         job.result = result
-        return self.job_repo.update_status(job, JobStatus.SUCCESS)
+        return self.repo.save(job)
 
-    def mark_failed(self, job: JobModel, error: str) -> JobModel:
-        job.last_error = error
+    def mark_failed(self, job: JobModel, error: str):
         job.retries += 1
+        job.last_error = error
 
         if job.retries >= job.max_retries:
-            return self.job_repo.update_status(job, JobStatus.FAILED)
+            job.status = JobStatus.FAILED
+        else:
+            job.status = JobStatus.RETRYING
 
-        return self.job_repo.update_status(job, JobStatus.PENDING)
+        return self.repo.save(job)

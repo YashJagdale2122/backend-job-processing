@@ -1,8 +1,4 @@
 from sqlalchemy.orm import Session
-from typing import Optional, List
-
-from app,infrastructure.db.models.job_models import JobModel
-from app.domain.enums import JobStatus
 
 class JobRepository:
     """
@@ -17,22 +13,10 @@ class JobRepository:
         self.db.refresh(job)
         return job
 
-    def get_by_id(self, job_id: int) -> Optional[JobModel]:
-        return(
-            self.db.query(JobModel)
-            .filter(JobModel.id == job_id)
-            .first()
-        )
+    def get_by_id(self, job_id: UUID):
+        return self.db.query(JobModel).filter(JobModel.id == job_id).first()
 
-    def get_by_status(self, status: JobStatus) -> List[JobModel]:
-        return(
-            self.db.query(JobModel)
-            .filter(JobModel.status == status)
-            .all()
-        )
-
-    def update_status(self, job: JobModel, status: JobStatus) -> JobModel:
-        job.status = status
+    def save(self, job: JobModel) -> JobModel:
         self.db.commit()
         self.db.refresh(job)
         return job
