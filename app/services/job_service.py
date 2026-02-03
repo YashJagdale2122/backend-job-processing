@@ -22,13 +22,24 @@ class JobService:
         job.result = result
         return self.repo.save(job)
 
-    def mark_failed(self, job: JobModel, error: str):
-        job.retries += 1
+    def mark_failed(self, job: JobModel, error: str) -> JobModel:
         job.last_error = error
+        job.retries += 1
 
         if job.retries >= job.max_retries:
-            job.status = JobStatus.FAILED
-        else:
-            job.status = JobStatus.RETRYING
+            return self.job_repo.update_status(job, JobStatus.FAILED)
 
-        return self.repo.save(job)
+        return self.job_repo.update_status(job, JobStatus.RETRYING)
+
+    def requeue(self, job: JobModel) -> JobModel:
+        """
+        Move a RETRYING job back to PENDING.
+        """
+        if job.status != JobStatus.RETRYING:
+            return job
+
+        return self.job_repo.update_status(job, JobStatus.PENDING)
+
+    def execute_job(self, job: JobModel) -> JobModel:
+        if job.status in (JobStatus.RUNNING, JobStatus.COMPLETED):
+            return job

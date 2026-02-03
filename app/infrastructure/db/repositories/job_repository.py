@@ -20,3 +20,11 @@ class JobRepository:
         self.db.commit()
         self.db.refresh(job)
         return job
+
+    def get_next_pending(self) -> JobModel | None:
+        return (
+            self.db.query(JobModel)
+            .filter(JobModel.status == JobStatus.PENDING)
+            .order_by(JobModel.created_at)
+            .first()
+        )
