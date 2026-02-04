@@ -30,10 +30,6 @@ def run_worker() -> None:
             except Exception:
                 # absolute safety net
                 service.mark_failed(job, "Worker crashed")
-            finally:
-                if job.status == JobStatus.RETRYING:
-                    service.requeue(job)
-
 
         finally:
             db.close()
