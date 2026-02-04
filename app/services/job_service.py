@@ -1,6 +1,7 @@
 from app.infrastructure.db.repositories.job_repository import JobRepository
-from app.infrastructure.db.models.job_model import JobModel
+from app.infrastructure.db.models.job_models import JobModel
 from app.domain.enums import JobStatus
+
 
 class JobService:
     def __init__(self, repo: JobRepository):
@@ -10,14 +11,18 @@ class JobService:
         job = JobModel(
             payload=payload,
             status=JobStatus.PENDING,
+            retries=0,
         )
-        return self.repo.create(job)
+        return self.repo.create_job(job)
 
-    def mark_running(self, job: JobModel):
+    def get_job(self, job_id):
+        return self.repo.get_by_id(job_id)
+
+    def mark_running(self, job: JobModel) -> JobModel:
         job.status = JobStatus.RUNNING
         return self.repo.save(job)
 
-    def mark_success(self, job: JobModel, result: dict):
+    def mark_success(self, job: JobModel, result: dict) -> JobModel:
         job.status = JobStatus.COMPLETED
         job.result = result
         return self.repo.save(job)
@@ -27,19 +32,32 @@ class JobService:
         job.retries += 1
 
         if job.retries >= job.max_retries:
-            return self.job_repo.update_status(job, JobStatus.FAILED)
+            job.status = JobStatus.FAILED
+        else:
+            job.status = JobStatus.RETRYING
 
-        return self.job_repo.update_status(job, JobStatus.RETRYING)
+        return self.repo.save(job)
 
     def requeue(self, job: JobModel) -> JobModel:
-        """
-        Move a RETRYING job back to PENDING.
-        """
         if job.status != JobStatus.RETRYING:
             return job
 
-        return self.job_repo.update_status(job, JobStatus.PENDING)
+        job.status = JobStatus.PENDING
+        return self.repo.save(job)
 
     def execute_job(self, job: JobModel) -> JobModel:
-        if job.status in (JobStatus.RUNNING, JobStatus.COMPLETED):
+        """
+        Core execution entrypoint.
+        """
+        if job.status != JobStatus.PENDING:
             return job
+
+        self.mark_running(job)
+
+        try:
+
+            result = {"message": "job executed successfully"}
+            return self.mark_success(job, result)
+
+        except Exception as exc:
+            return self.mark_failed(job, str(exc))
