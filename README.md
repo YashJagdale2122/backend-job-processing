@@ -5,6 +5,7 @@
 ![SQLAlchemy](https://img.shields.io/badge/ORM-SQLAlchemy-red)
 ![Architecture](https://img.shields.io/badge/Architecture-Layered-informational)
 ![Status](https://img.shields.io/badge/Status-Actively%20Maintained-brightgreen)
+![CI](https://github.com/YashJagdale2122/backend-job-processing/actions/workflows/ci.yml/badge.svg)
 
 A production-oriented backend system for **asynchronous job processing**, built with **FastAPI** and **SQLAlchemy**.
 Designed to demonstrate **backend system design**, **job lifecycle management**, and **clean architecture patterns** — without unnecessary ML complexity.
