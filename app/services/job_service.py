@@ -40,9 +40,9 @@ class JobService:
         job.retries += 1
 
         next_status = (
-            JobStatus.FAILED
-            if job.retries >= job.max_retries
-            else JobStatus.RETRYING
+            JobStatus.RETRYING
+            if self._should_retry(job)
+            else JobStatus.FAILED
         )
 
         if not self._can_transition(job.status, next_status):
@@ -52,12 +52,18 @@ class JobService:
         return self.repo.save(job)
 
 
+
     def requeue(self, job: JobModel) -> JobModel:
+        """
+        Requeue a RETRYING job back to PENDING.
+        Retries are immediate by design (no backoff).
+        """
         if not self._can_transition(job.status, JobStatus.PENDING):
             return job
 
         job.status = JobStatus.PENDING
         return self.repo.save(job)
+
 
 
     def execute_job(self, job: JobModel) -> JobModel:
@@ -86,3 +92,10 @@ class JobService:
         }
 
         return target in allowed.get(current, set())
+
+    def _should_retry(self, job: JobModel) -> bool:
+        """
+        Decide whether a job should be retried.
+        Current strategy: immediate retry with max attempt limit.
+        """
+        return job.retries < job.max_retries
