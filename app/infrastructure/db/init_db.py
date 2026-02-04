@@ -1,7 +1,7 @@
 from app.core.database import Base, engine
 
 # Import ALL models here
-from app.infrastructure.db.models.job_model import JobModel  # noqa: F401
+from app.infrastructure.db.models.job_models import JobModel  # noqa: F401
 
 
 def init_db() -> None:

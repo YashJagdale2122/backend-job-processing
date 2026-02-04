@@ -3,6 +3,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
 
+from app.core.database import Base
+from app.domain.enums import JobStatus, JobType
+
+
 class JobModel(Base):
     __tablename__ = "jobs"
 

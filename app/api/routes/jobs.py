@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from app.api.schemas.job import JobCreateRequest, JobResponse
 from app.core.database import get_db
@@ -25,7 +26,7 @@ def create_job(
 
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job(
-    job_id: int,
+    job_id: UUID,
     service: JobService = Depends(get_job_service),
 ):
     job = service.get_job(job_id)

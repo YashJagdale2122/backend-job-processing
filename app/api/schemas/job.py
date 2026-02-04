@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 from typing import Optional, Dict
-from app.domain.enums.job_status import JobStatus
-
+from app.domain.enums import JobStatus
+from uuid import UUID
 
 class JobCreateRequest(BaseModel):
     payload: Dict
 
 
 class JobResponse(BaseModel):
-    id: int
+    id: UUID
     status: JobStatus
     retries: int
     result: Optional[Dict] = None
